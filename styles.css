@@ -17,52 +17,52 @@
     --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     
-    /* Default Dark Discord Theme variables */
-    --bg-primary: #0c1014;
-    --bg-surface: #181e26;
-    --bg-surface-elevated: #202630;
-    --bg-input: #10161c;
+    /* Default iOS 26 Glass Slate Theme variables */
+    --bg-primary: transparent;
+    --bg-surface: rgba(24, 28, 38, 0.45);
+    --bg-surface-elevated: rgba(40, 46, 58, 0.6);
+    --bg-input: rgba(255, 255, 255, 0.05);
     --text-primary: #ffffff;
-    --text-secondary: #94a3b8;
+    --text-secondary: rgba(255, 255, 255, 0.6);
     --accent: #2481cc;
     --accent-hover: #1b629c;
-    --accent-light: rgba(36, 129, 204, 0.15);
-    --accent-glow: rgba(36, 129, 204, 0.35);
-    --danger: #ef4444;
-    --danger-hover: #dc2626;
-    --success: #10b981;
+    --accent-light: rgba(36, 129, 204, 0.25);
+    --accent-glow: rgba(36, 129, 204, 0.45);
+    --danger: #ff453a; /* iOS Red */
+    --danger-hover: #ff3b30;
+    --success: #34c759; /* iOS Green */
 }
 
-/* Theme Variant: crimson */
+/* Theme Variant: crimson (Glass edition) */
 .theme-crimson {
-    --bg-primary: #120508;
-    --bg-surface: #1e0a0f;
-    --bg-surface-elevated: #280d14;
-    --bg-input: #15060a;
+    --bg-primary: transparent;
+    --bg-surface: rgba(30, 10, 15, 0.45);
+    --bg-surface-elevated: rgba(50, 15, 25, 0.6);
+    --bg-input: rgba(255, 255, 255, 0.05);
     --text-primary: #ffffff;
-    --text-secondary: #e2a0b0;
-    --accent: #dc143c;
-    --accent-hover: #b00f2e;
-    --accent-light: rgba(220, 20, 60, 0.15);
-    --accent-glow: rgba(220, 20, 60, 0.35);
-    --danger: #ef4444;
-    --success: #10b981;
+    --text-secondary: rgba(255, 230, 235, 0.65);
+    --accent: #ff2d55; /* iOS Pink/Rose */
+    --accent-hover: #e02447;
+    --accent-light: rgba(255, 45, 85, 0.25);
+    --accent-glow: rgba(255, 45, 85, 0.45);
+    --danger: #ff453a;
+    --success: #34c759;
 }
 
-/* Theme Variant: cyber */
+/* Theme Variant: cyber (Neon Glass edition) */
 .theme-cyber {
-    --bg-primary: #14001e;
-    --bg-surface: #26003a;
-    --bg-surface-elevated: #350052;
-    --bg-input: #1a0026;
+    --bg-primary: transparent;
+    --bg-surface: rgba(30, 0, 50, 0.45);
+    --bg-surface-elevated: rgba(60, 0, 90, 0.6);
+    --bg-input: rgba(255, 255, 255, 0.05);
     --text-primary: #ffffff;
-    --text-secondary: #e270ff;
+    --text-secondary: rgba(226, 112, 255, 0.7);
     --accent: #ff1493;
     --accent-hover: #cc0f75;
-    --accent-light: rgba(255, 20, 147, 0.15);
-    --accent-glow: rgba(255, 20, 147, 0.35);
-    --danger: #00ffff; /* Cyber cyan as danger/neon counter */
-    --success: #39ff14; /* Neon green */
+    --accent-light: rgba(255, 20, 147, 0.25);
+    --accent-glow: rgba(255, 20, 147, 0.45);
+    --danger: #00ffff;
+    --success: #39ff14;
 }
 
 /* Scrollbar tweaks */
@@ -74,22 +74,27 @@
     background: transparent;
 }
 .custom-scroll::-webkit-scrollbar-thumb {
-    background: var(--bg-surface-elevated);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 10px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
     background: var(--accent);
 }
 
-/* Base Body Styles for iOS Standalone (Bounce-free) */
+/* Base Body Styles for iOS Standalone (Bounce-free with Space Aurora Ambient Gradient) */
 html {
-    background-color: #000;
+    background-color: #090a0f;
 }
 
 body {
     font-family: var(--font-body);
     color: var(--text-primary);
-    background-color: var(--bg-primary);
+    background: 
+        radial-gradient(circle at 12% 15%, rgba(68, 32, 140, 0.5) 0%, rgba(9, 10, 15, 0) 50%),
+        radial-gradient(circle at 88% 85%, rgba(20, 75, 150, 0.4) 0%, rgba(9, 10, 15, 0) 50%),
+        radial-gradient(circle at 50% 50%, rgba(25, 30, 45, 0.3) 0%, rgba(9, 10, 15, 0.2) 100%),
+        linear-gradient(135deg, #0d0f14 0%, #06070a 100%);
+    background-size: cover;
     overflow: hidden;
     position: fixed;
     top: 0;
@@ -102,17 +107,17 @@ body {
     flex-direction: column;
 }
 
-/* Safe areas */
+/* Safe areas - fully translucent integrated design */
 .safe-area-top {
     height: var(--sat);
-    background-color: var(--bg-surface);
+    background-color: transparent;
     flex-shrink: 0;
     z-index: 100;
 }
 
 .safe-area-bottom {
     height: var(--sab);
-    background-color: var(--bg-primary);
+    background-color: transparent;
     flex-shrink: 0;
     z-index: 100;
 }
@@ -179,7 +184,7 @@ body {
     display: none;
     flex-direction: column;
     z-index: 10;
-    background-color: var(--bg-primary);
+    background-color: transparent;
 }
 
 .screen.active {
@@ -192,17 +197,19 @@ body {
     align-items: center;
     padding: 24px;
     z-index: 20;
-    background: radial-gradient(circle at top, var(--bg-surface-elevated) 0%, var(--bg-primary) 70%);
+    background: transparent;
 }
 
 .auth-card {
-    background-color: var(--bg-surface);
+    background-color: rgba(28, 30, 40, 0.45);
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
     border-radius: 24px;
     padding: 28px 24px;
     width: 100%;
     max-width: 400px;
-    box-shadow: 0 12px 36px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .auth-header {
@@ -339,7 +346,7 @@ body {
 
 /* Screen 2: CHATS MAIN LIST */
 #screen-chats {
-    background-color: var(--bg-primary);
+    background-color: transparent;
 }
 
 .main-header {
@@ -347,8 +354,10 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 14px 16px;
-    background-color: var(--bg-surface);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background-color: rgba(20, 24, 33, 0.4);
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .user-profile-trigger {
@@ -427,14 +436,23 @@ body {
 
 .search-bar input {
     width: 100%;
-    background-color: var(--bg-surface);
-    border: none;
-    border-radius: 12px;
-    padding: 10px 14px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
     font-size: 14px;
     color: #fff;
     font-family: var(--font-body);
     outline: none;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+}
+
+.search-bar input:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 10px var(--accent-light);
 }
 
 /* Chats Feed */
@@ -444,7 +462,7 @@ body {
     padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 8px;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -452,15 +470,18 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
-    border-radius: 16px;
+    padding: 14px;
+    border-radius: 18px;
     cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: transparent;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .chat-item:active {
-    background-color: var(--bg-surface-elevated);
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: scale(0.98);
 }
 
 .chat-item.unread {
@@ -540,15 +561,17 @@ body {
 
 /* Screen 3: ACTIVE CHAT SCREEN */
 #screen-chat-active {
-    background-color: var(--bg-primary);
+    background-color: transparent;
 }
 
 .chat-header {
     display: flex;
     align-items: center;
     padding: 12px 14px;
-    background-color: var(--bg-surface);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background-color: rgba(20, 24, 33, 0.45);
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .nav-back-button {
@@ -637,10 +660,14 @@ body {
     font-size: 14px;
     line-height: 1.45;
     word-break: break-word;
+    border: 1px solid transparent;
 }
 
 .incoming .message-bubble {
-    background-color: var(--bg-surface);
+    background-color: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-color: rgba(255, 255, 255, 0.05);
     color: #fff;
     border-bottom-left-radius: 4px;
 }
@@ -649,7 +676,8 @@ body {
     background-color: var(--accent);
     color: #fff;
     border-bottom-right-radius: 4px;
-    box-shadow: 0 2px 4px rgba(36,129,204,0.25);
+    box-shadow: 0 4px 15px var(--accent-light);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .message-sender {
@@ -666,7 +694,7 @@ body {
     align-items: center;
     gap: 4px;
     font-size: 10px;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.5);
     margin-top: 4px;
     text-align: right;
 }
@@ -675,11 +703,54 @@ body {
     color: var(--text-secondary);
 }
 
-/* Image attachments */
+/* Image attachments and premium downloader overlays */
+.media-container-pwa {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    margin-top: 4px;
+    display: inline-block;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .img-msg {
     max-width: 100%;
+    max-height: 320px;
+    object-fit: contain;
     border-radius: 12px;
-    margin-top: 4px;
+    display: block;
+}
+
+.btn-download-img {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(9, 10, 15, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.23s ease;
+    opacity: 0.9;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.btn-download-img:hover {
+    background: var(--accent);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+
+.btn-download-img:active {
+    transform: scale(0.95);
 }
 
 /* Pending indicator */
@@ -690,8 +761,10 @@ body {
 
 /* Input Area at the bottom */
 .chat-input-area {
-    background-color: var(--bg-surface);
-    border-top: 1px solid rgba(255,255,255,0.05);
+    background-color: rgba(20, 24, 33, 0.45);
+    backdrop-filter: blur(25px) saturate(190%);
+    -webkit-backdrop-filter: blur(25px) saturate(190%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     padding: 10px 14px;
     display: flex;
     align-items: center;
@@ -716,7 +789,8 @@ body {
 
 .text-input-wrapper {
     flex: 1;
-    background-color: var(--bg-input);
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 20px;
     padding: 6px 12px;
     display: flex;
@@ -756,14 +830,14 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0,0,0,0.7);
+    background-color: rgba(6, 8, 12, 0.45);
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 24px;
     z-index: 200;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 }
 
 .dialog-overlay.hidden {
@@ -771,13 +845,15 @@ body {
 }
 
 .dialog-card {
-    background-color: var(--bg-surface);
+    background-color: rgba(28, 30, 40, 0.55);
+    backdrop-filter: blur(25px) saturate(200%);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
     border-radius: 24px;
     width: 100%;
     max-width: 440px;
     padding: 24px;
-    border: 1px solid rgba(255,255,255,0.05);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
 }
 
 .dialog-card h3 {

@@ -316,10 +316,11 @@ function setAvatarLayout(element, nickname, avatarUrlSrc) {
     if (!element) return;
     
     element.innerHTML = '';
+    const src = avatarUrlSrc ? avatarUrlSrc.trim() : '';
     
-    if (avatarUrlSrc && avatarUrlSrc.trim().startsWith('http')) {
+    if (src && (src.startsWith('http') || src.startsWith('data:image/'))) {
         const img = document.createElement('img');
-        img.src = avatarUrlSrc.trim();
+        img.src = src;
         img.alt = nickname;
         img.onerror = () => {
             // fallback
@@ -463,12 +464,31 @@ function renderMessagesFeed() {
         // Parse message structure (Standard image embedding fallback)
         if (msg.text && msg.text.startsWith('[IMAGE]:')) {
             const src = msg.text.substring(8);
+            
+            const mediaWrapper = document.createElement('div');
+            mediaWrapper.className = 'media-container-pwa';
+            mediaWrapper.style.position = 'relative';
+            mediaWrapper.style.display = 'inline-block';
+            
             const img = document.createElement('img');
             img.src = src;
             img.className = 'img-msg';
             img.alt = "Отправленное фото";
-            img.onerror = () => { img.style.display = 'none'; };
-            bubble.appendChild(img);
+            img.onerror = () => { mediaWrapper.style.display = 'none'; };
+            mediaWrapper.appendChild(img);
+            
+            // Neat iOS styled download button overlayed beautifully
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'btn-download-img';
+            downloadBtn.innerHTML = '📥 Скачать';
+            downloadBtn.title = 'Сохранить на устройство';
+            downloadBtn.onclick = (e) => {
+                e.stopPropagation();
+                downloadImageToDevice(src);
+            };
+            mediaWrapper.appendChild(downloadBtn);
+            
+            bubble.appendChild(mediaWrapper);
         } else {
             const bodySpan = document.createElement('span');
             bodySpan.innerText = msg.text || '';
@@ -681,15 +701,36 @@ function setupModals() {
     // Add Media UI triggers
     document.getElementById('btn-send-media').addEventListener('click', () => {
         document.getElementById('media-url-input').value = '';
+        const fileInput = document.getElementById('media-file-input');
+        if (fileInput) fileInput.value = "";
         dialogMedia.classList.remove('hidden');
     });
     document.getElementById('btn-media-cancel').addEventListener('click', () => {
+        const fileInput = document.getElementById('media-file-input');
+        if (fileInput) fileInput.value = "";
         dialogMedia.classList.add('hidden');
     });
-    document.getElementById('btn-media-submit').addEventListener('click', () => {
-        const urlStr = document.getElementById('media-url-input').value.trim();
-        if (!urlStr || !urlStr.startsWith('http')) {
-            alert("Пожалуйста, введите корректный адрес картинки!");
+    document.getElementById('btn-media-submit').addEventListener('click', async () => {
+        let urlStr = document.getElementById('media-url-input').value.trim();
+        const fileInput = document.getElementById('media-file-input');
+        
+        let fileStatusText = null;
+        if (fileInput && fileInput.files && fileInput.files[0]) {
+            try {
+                // Show temporary user status feedback
+                document.getElementById('btn-media-submit').innerText = "Сжатие...";
+                urlStr = await compressAndResizeImage(fileInput.files[0]);
+            } catch (err) {
+                alert("Ошибка сжатия файла: " + err.message);
+                document.getElementById('btn-media-submit').innerText = "Отправить";
+                return;
+            } finally {
+                document.getElementById('btn-media-submit').innerText = "Отправить";
+            }
+        }
+        
+        if (!urlStr || (!urlStr.startsWith('http') && !urlStr.startsWith('data:image/'))) {
+            alert("Пожалуйста, введите прямую ссылку или выберите файл изображения!");
             return;
         }
         
@@ -719,6 +760,7 @@ function setupModals() {
             renderMessagesFeed();
         }
         
+        if (fileInput) fileInput.value = "";
         dialogMedia.classList.add('hidden');
     });
     
@@ -822,3 +864,112 @@ if ("Notification" in window) {
         Notification.requestPermission();
     }
 }
+
+// === PREMIUM UTILITIES FOR PHOTO UPLOAD & SAVING ===
+
+// 1. High-Performance Client-Side Image Resizer & Compressor
+function compressAndResizeImage(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 1000;
+                const MAX_HEIGHT = 1000;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // Compress as JPEG with high-fidelity 0.78 quality ratio
+                const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.78);
+                resolve(compressedDataUrl);
+            };
+            img.onerror = (err) => reject(new Error("Не удалось загрузить изображение в буфер."));
+        };
+        reader.onerror = (err) => reject(new Error("Не удалось прочитать выбранный файл."));
+    });
+}
+
+// 2. Safe File Downloader (Supports Base64 dataURIs and cross-origin standard URLs)
+function downloadImageToDevice(src) {
+    if (!src) return;
+    try {
+        const link = document.createElement('a');
+        link.href = src;
+        
+        // Match safe extension format
+        const isBase64 = src.startsWith('data:');
+        let ext = '.jpg';
+        if (isBase64) {
+            const match = src.match(/data:image\/([a-zA-Z+0-9]+);base64/);
+            if (match && match[1]) {
+                const matchedExt = match[1].toLowerCase();
+                ext = '.' + (matchedExt === 'jpeg' ? 'jpg' : matchedExt);
+            }
+        } else {
+            const pathParts = src.split('.');
+            if (pathParts.length > 1) {
+                const potentialExt = pathParts[pathParts.length - 1].split(/[?#]/)[0];
+                if (potentialExt.length <= 4) ext = '.' + potentialExt.toLowerCase();
+            }
+        }
+        
+        link.download = 'renabile-photo-' + Date.now() + ext;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } catch (err) {
+        console.warn("Soft-downlink CORS restriction matched, opening dynamic view in fallback tab:", err);
+        window.open(src, '_blank');
+    }
+}
+
+// 3. Register Avatar File Listener for instant Base64 compression & visual preview update
+document.addEventListener("DOMContentLoaded", () => {
+    const avatarFileInput = document.getElementById('set-avatar-file');
+    if (avatarFileInput) {
+        avatarFileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const fileLabel = e.target.previousElementSibling;
+            const originalLabelText = fileLabel ? fileLabel.innerText : "";
+            
+            try {
+                if (fileLabel) fileLabel.innerText = "Идет обработка файла...";
+                
+                const compressedBase64 = await compressAndResizeImage(file);
+                
+                // Assign to text field to save with standard form profile update
+                document.getElementById('set-avatar-url').value = compressedBase64;
+                
+                // Instantly update settings card preview avatar layout
+                setAvatarLayout(document.getElementById('settings-my-avatar'), currentUserNickname, compressedBase64);
+                
+                if (fileLabel) fileLabel.innerText = "Фото успешно загружено! ✅";
+            } catch (err) {
+                alert('Ошибка при чтении/сжатии файла: ' + err.message);
+                if (fileLabel) fileLabel.innerText = originalLabelText;
+            }
+        });
+    }
+});

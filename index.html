@@ -175,8 +175,10 @@
         <div id="dialog-media" class="dialog-overlay hidden">
             <div class="dialog-card">
                 <h3>Поделиться фотографией</h3>
-                <p>Введите прямую ссылку на изображение (URL):</p>
-                <input type="url" id="media-url-input" placeholder="https://site.ru/image.jpg">
+                <p>Выберите файл с вашего устройства:</p>
+                <input type="file" id="media-file-input" accept="image/*" style="padding: 6px; margin-bottom: 12px;">
+                <p style="margin: 0 0 12px; font-size: 11px; opacity: 0.6; text-align: center;">или укажите прямую ссылку на картинку (URL):</p>
+                <input type="url" id="media-url-input" placeholder="https://site.ru/image.jpg" style="margin-bottom: 20px;">
                 <div class="dialog-buttons">
                     <button class="btn-secondary" id="btn-media-cancel">Отмена</button>
                     <button class="btn-primary" id="btn-media-submit">Отправить</button>
@@ -210,6 +212,11 @@
                     <div class="input-group">
                         <label for="set-avatar-url">Ссылка на фото (Аватар URL)</label>
                         <input type="text" id="set-avatar-url" placeholder="https://example.com/photo.png">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="set-avatar-file">Или выберите файл 📷</label>
+                        <input type="file" id="set-avatar-file" accept="image/*" style="padding: 6px;">
                     </div>
 
                     <div class="input-group">
