@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Renabile Chat PWA</title>
+    
+    <!-- PWA & Apple Specific Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Renabile Chat">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="apple-touch-startup-image" href="icons/splash.png">
+    
+    <!-- Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0c1014">
+    
+    <!-- Link CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body class="custom-scroll">
+
+    <!-- Safe Area top margin proxy -->
+    <div class="safe-area-top"></div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="theme-discord">
+        
+        <!-- STATUS BANNER -->
+        <div id="status-banner" class="status-banner offline">
+            <span class="banner-dot"></span>
+            <span id="status-text">Подключение...</span>
+        </div>
+
+        <!-- 1. AUTH SCREEN -->
+        <div id="screen-auth" class="screen active">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <div class="logo-accent">📱</div>
+                    <h1>Renabile</h1>
+                    <p>Web PWA для iPhone</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="auth-tabs">
+                    <button id="tab-login" class="tab-btn active">Вход</button>
+                    <button id="tab-register" class="tab-btn">Регистрация</button>
+                </div>
+
+                <!-- Auth Form -->
+                <form id="auth-form">
+                    <div class="input-group">
+                        <label for="auth-username">Логин (Имя)</label>
+                        <input type="text" id="auth-username" required placeholder="Введите ваш логин">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="auth-password">Пароль</label>
+                        <input type="password" id="auth-password" required placeholder="••••••••">
+                    </div>
+
+                    <div id="register-only-fields" class="hidden">
+                        <div class="input-group">
+                            <label for="auth-email">E-mail для восстановления</label>
+                            <input type="email" id="auth-email" placeholder="example@mail.ru">
+                        </div>
+                    </div>
+
+                    <div class="server-config-section">
+                        <div class="section-title" id="toggle-server-config">Настройки сервера ⚙️</div>
+                        <div id="server-config-inputs" class="hidden-config">
+                            <div class="input-group">
+                                <label for="auth-server-url">Адрес WebSocket сервера</label>
+                                <input type="text" id="auth-server-url" value="wss://renabile-node-storage.onrender.com">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btn-auth-submit" class="btn-primary">Войти в аккаунт</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 2. MAIN HUB (CHATS LIST) -->
+        <div id="screen-chats" class="screen">
+            <!-- Sidebar / List Navigation -->
+            <header class="main-header">
+                <div class="user-profile-trigger" id="btn-open-settings">
+                    <div class="avatar" id="my-avatar-container"><span>U</span></div>
+                    <div class="profile-details">
+                        <span id="my-username-lbl">Загрузка...</span>
+                        <span id="my-code-lbl" class="user-code">#0000</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-add-friend-ui" class="action-circle-btn" title="Добавить друга">
+                        <span>+</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="search-bar">
+                <input type="text" id="chat-search" placeholder="Поиск контактов и групп...">
+            </div>
+
+            <!-- Scrollable Chats Feed -->
+            <div class="chats-feed custom-scroll" id="chats-list-container">
+                <!-- Dynamically populated chats of class .chat-item -->
+                <div class="empty-state">
+                    <div class="empty-icon">💬</div>
+                    <h3>Ваш список чатов пуст</h3>
+                    <p>Добавьте собеседника, введя его постоянный ID код в右上 углу!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ACTIVE CHAT SCREEN -->
+        <div id="screen-chat-active" class="screen">
+            <header class="chat-header">
+                <button id="btn-chat-back" class="nav-back-button">←</button>
+                <div class="chat-header-info">
+                    <div class="avatar" id="active-chat-avatar"><span>A</span></div>
+                    <div class="chat-header-text">
+                        <h2 id="active-chat-title">Никнейм</h2>
+                        <span id="active-chat-status" class="online-status">Неизвестно</span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button id="btn-clear-chat" class="header-action-btn danger-text">Очистить</button>
+                </div>
+            </header>
+
+            <!-- Messages Area -->
+            <div class="messages-container custom-scroll" id="messages-scroller">
+                <!-- Dynamic chats -->
+            </div>
+
+            <!-- Input area styled for safe area navigation at bottom -->
+            <div class="chat-input-area">
+                <div class="input-actions">
+                    <button id="btn-send-media" class="input-action-btn" title="Отправить картинку">📷</button>
+                </div>
+                <div class="text-input-wrapper">
+                    <textarea id="message-text-input" placeholder="Введите сообщение..." rows="1"></textarea>
+                </div>
+                <button id="btn-send-message" class="btn-send">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- DIALOG MODALS -->
+        <!-- Add Friend Dialog -->
+        <div id="dialog-add-friend" class="dialog-overlay hidden">
+            <div class="dialog-card">
+                <h3>Добавить друга</h3>
+                <p>Введите постоянный 4-значный ID код пользователя:</p>
+                <input type="text" id="add-friend-code" placeholder="0000" maxlength="4" pattern="\d*">
+                <div class="dialog-buttons">
+                    <button class="btn-secondary" id="btn-add-friend-cancel">Отмена</button>
+                    <button class="btn-primary" id="btn-add-friend-submit">Добавить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Send Media Dialog -->
+        <div id="dialog-media" class="dialog-overlay hidden">
+            <div class="dialog-card">
+                <h3>Поделиться фотографией</h3>
+                <p>Введите прямую ссылку на изображение (URL):</p>
+                <input type="url" id="media-url-input" placeholder="https://site.ru/image.jpg">
+                <div class="dialog-buttons">
+                    <button class="btn-secondary" id="btn-media-cancel">Отмена</button>
+                    <button class="btn-primary" id="btn-media-submit">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Settings / Profile Settings Dialog -->
+        <div id="dialog-settings" class="dialog-overlay hidden">
+            <div class="dialog-card settings-card custom-scroll">
+                <div class="dialog-card-header">
+                    <h2>Настройки профиля</h2>
+                    <button class="close-modal" id="btn-close-settings">×</button>
+                </div>
+
+                <div class="profile-summary-sec">
+                    <div class="avatar large-avatar" id="settings-my-avatar"><span>U</span></div>
+                    <div class="profile-info-block">
+                        <h3 id="settings-my-username-lbl">Загрузка...</h3>
+                        <p id="settings-my-code-lbl" class="user-code">#0000</p>
+                    </div>
+                </div>
+
+                <div class="settings-group">
+                    <h4 class="settings-title">Личные данные</h4>
+                    <div class="input-group">
+                        <label for="set-username">Имя (Никнейм)</label>
+                        <input type="text" id="set-username" placeholder="Ваш ник">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="set-avatar-url">Ссылка на фото (Аватар URL)</label>
+                        <input type="text" id="set-avatar-url" placeholder="https://example.com/photo.png">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="set-email">E-mail восстановления</label>
+                        <input type="email" id="set-email" placeholder="example@mail.ru">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="set-password">Смена пароля (оставьте пустым чтобы сохранить)</label>
+                        <input type="password" id="set-password" placeholder="Новый пароль">
+                    </div>
+
+                    <!-- Toggle Alarm Sound -->
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="set-wakeup" name="wakeup-sound">
+                        <label for="set-wakeup">Входящие звонки и звук-пробуждения (АЛО ПРОСЫПАЙСЯ)</label>
+                    </div>
+                </div>
+
+                <!-- Custom Themes -->
+                <div class="settings-group">
+                    <h4 class="settings-title">Цветовая тема (Nitro Custom)</h4>
+                    <div class="theme-picker-row">
+                        <button class="theme-btn theme-btn-discord active" data-theme="discord">Discord Dark</button>
+                        <button class="theme-btn theme-btn-crimson" data-theme="crimson">Багровый закат</button>
+                        <button class="theme-btn theme-btn-cyber" data-theme="cyber">Cyber Punk</button>
+                    </div>
+                </div>
+
+                <button class="btn-primary" id="btn-save-settings" style="margin-top: 15px;">Сохранить изменения</button>
+                <button class="btn-danger-outline" id="btn-logout" style="margin-top: 10px;">Выйти из аккаунта</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Safe Area bottom margin proxy (crucial for home swipe-ups) -->
+    <div class="safe-area-bottom"></div>
+
+    <!-- Audio Player for alerts -->
+    <audio id="sound-wakeup" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav" preload="auto"></audio>
+
+    <script src="app.js"></script>
+</body>
+</html>
