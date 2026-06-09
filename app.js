@@ -286,6 +286,43 @@ function handleIncomingPacket(packet) {
             }
             break;
         }
+        case "MSG_UPDATE": {
+            const clientMsgId = data.clientMsgId;
+            const room = data.room || 'GLOBAL';
+            const text = data.text;
+            const reaction = data.reaction;
+            const isEdited = data.isEdited;
+            const isDeleted = data.isDeleted;
+            
+            const targetRoom = room;
+            if (!localMessages[targetRoom]) {
+                localMessages[targetRoom] = [];
+            }
+            
+            const existing = localMessages[targetRoom].find(m => m.clientMsgId === clientMsgId);
+            if (existing) {
+                if (text !== undefined && text !== "") existing.text = text;
+                if (reaction !== undefined) existing.reaction = reaction;
+                if (isEdited !== undefined) existing.isEdited = isEdited;
+                if (isDeleted !== undefined) existing.isDeleted = isDeleted;
+            } else {
+                localMessages[targetRoom].push({
+                    roomId: targetRoom,
+                    sender: data.sender || "",
+                    text: text || "",
+                    reaction: reaction || "",
+                    isEdited: isEdited || false,
+                    isDeleted: isDeleted || false,
+                    clientMsgId: clientMsgId,
+                    time: getCurrentTimeStr()
+                });
+            }
+            
+            if (activeChat && activeChat.code === targetRoom) {
+                renderMessagesFeed();
+            }
+            break;
+        }
     }
 }
 
@@ -316,11 +353,18 @@ function setAvatarLayout(element, nickname, avatarUrlSrc) {
     if (!element) return;
     
     element.innerHTML = '';
-    const src = avatarUrlSrc ? avatarUrlSrc.trim() : '';
+    let src = avatarUrlSrc ? avatarUrlSrc.trim() : '';
+    if (src && src.startsWith('[IMAGE]:')) {
+        src = src.substring(8);
+    }
     
-    if (src && (src.startsWith('http') || src.startsWith('data:image/'))) {
+    if (src) {
+        let imgSrc = src;
+        if (!imgSrc.startsWith('http') && !imgSrc.startsWith('data:image/')) {
+            imgSrc = 'data:image/jpeg;base64,' + imgSrc;
+        }
         const img = document.createElement('img');
-        img.src = src;
+        img.src = imgSrc;
         img.alt = nickname;
         img.onerror = () => {
             // fallback
@@ -463,7 +507,11 @@ function renderMessagesFeed() {
         
         // Parse message structure (Standard image embedding fallback)
         if (msg.text && msg.text.startsWith('[IMAGE]:')) {
-            const src = msg.text.substring(8);
+            const src = msg.text.substring(8).trim();
+            let imgSrc = src;
+            if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://') && !imgSrc.startsWith('data:image/')) {
+                imgSrc = 'data:image/jpeg;base64,' + imgSrc;
+            }
             
             const mediaWrapper = document.createElement('div');
             mediaWrapper.className = 'media-container-pwa';
@@ -471,7 +519,7 @@ function renderMessagesFeed() {
             mediaWrapper.style.display = 'inline-block';
             
             const img = document.createElement('img');
-            img.src = src;
+            img.src = imgSrc;
             img.className = 'img-msg';
             img.alt = "Отправленное фото";
             img.onerror = () => { mediaWrapper.style.display = 'none'; };
@@ -484,7 +532,7 @@ function renderMessagesFeed() {
             downloadBtn.title = 'Сохранить на устройство';
             downloadBtn.onclick = (e) => {
                 e.stopPropagation();
-                downloadImageToDevice(src);
+                downloadImageToDevice(imgSrc);
             };
             mediaWrapper.appendChild(downloadBtn);
             
