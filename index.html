@@ -111,7 +111,10 @@
                 </div>
                 <div class="header-actions">
                     <button id="btn-add-friend-ui" class="action-circle-btn" title="Добавить друга">
-                        <span>+</span>
+                        <span>+👤</span>
+                    </button>
+                    <button id="btn-create-group-ui" class="action-circle-btn" style="background: #00C853;" title="Создать группу">
+                        <span>+👥</span>
                     </button>
                 </div>
             </header>
@@ -179,6 +182,21 @@
                 <div class="dialog-buttons">
                     <button class="btn-secondary" id="btn-add-friend-cancel">Отмена</button>
                     <button class="btn-primary" id="btn-add-friend-submit">Добавить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Group Dialog -->
+        <div id="dialog-create-group" class="dialog-overlay hidden">
+            <div class="dialog-card">
+                <h3>Создать группу</h3>
+                <p>Введите название группы:</p>
+                <input type="text" id="create-group-name" placeholder="Название группы">
+                <p style="margin-top: 10px; font-size: 11px; color: var(--text-secondary);">Введите ID участников через запятую (например, 1234, 5678):</p>
+                <input type="text" id="create-group-members" placeholder="ID участников">
+                <div class="dialog-buttons">
+                    <button class="btn-secondary" id="btn-create-group-cancel">Отмена</button>
+                    <button class="btn-primary" id="btn-create-group-submit">Создать</button>
                 </div>
             </div>
         </div>

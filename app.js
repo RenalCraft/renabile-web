@@ -219,7 +219,9 @@ function handleIncomingPacket(packet) {
         }
         case "FRIENDS_LIST": {
             const list = data.list || [];
-            chatsList = list;
+            // Preserve current group items while updating friend list
+            const currentGroups = chatsList.filter(c => c.isGroup);
+            chatsList = list.concat(currentGroups);
             renderChatsList();
             
             // If in active chat, update the heading states
@@ -227,9 +229,44 @@ function handleIncomingPacket(packet) {
                 const refreshed = chatsList.find(c => c.code === activeChat.code);
                 if (refreshed) {
                     activeChat = refreshed;
-                    document.getElementById('active-chat-status').innerText = refreshed.online ? 'В сети' : 'был(а) в сети недавно';
-                    document.getElementById('active-chat-status').className = 'online-status' + (refreshed.online ? ' online' : '');
+                    let statusVal = refreshed.online ? 'В сети' : 'был(а) в сети недавно';
+                    if (refreshed.isGroup) statusVal = 'Группа';
+                    document.getElementById('active-chat-status').innerText = statusVal;
+                    document.getElementById('active-chat-status').className = 'online-status' + ((refreshed.online || refreshed.isGroup) ? ' online' : '');
                 }
+            }
+            break;
+        }
+        case "GROUPS_LIST": {
+            const list = data.list || [];
+            const mappedGroups = list.map(g => ({
+                code: g.id,
+                username: g.name,
+                avatar: g.avatar || "",
+                online: true,
+                isGroup: true,
+                last_seen: 0
+            }));
+            // Filters out old groups and appends the updated ones
+            const nonGroups = chatsList.filter(c => !c.isGroup);
+            chatsList = nonGroups.concat(mappedGroups);
+            renderChatsList();
+            break;
+        }
+        case "GROUP_CREATED": {
+            // Re-fetch or add group to chatsList dynamically
+            const group = data;
+            const exists = chatsList.some(c => c.code === group.id);
+            if (!exists) {
+                chatsList.push({
+                    code: group.id,
+                    username: group.name,
+                    avatar: group.avatar || "",
+                    online: true,
+                    isGroup: true,
+                    last_seen: 0
+                });
+                renderChatsList();
             }
             break;
         }
@@ -439,7 +476,12 @@ function renderChatsList() {
         
         const timeNode = document.createElement('span');
         timeNode.className = 'chat-time';
-        timeNode.innerText = chat.online ? 'в сети' : 'оффлайн';
+        if (chat.isGroup) {
+            timeNode.innerText = 'Группа';
+            timeNode.style.color = '#00C853';
+        } else {
+            timeNode.innerText = chat.online ? 'в сети' : 'оффлайн';
+        }
         
         metaRow.appendChild(nameNode);
         metaRow.appendChild(timeNode);
@@ -467,12 +509,15 @@ function selectChat(chat) {
     activeChat = chat;
     document.getElementById('active-chat-title').innerText = chat.username;
     
-    const statusVal = chat.online ? 'В сети' : 'был(а) в сети давно';
+    let statusVal = chat.online ? 'В сети' : 'был(а) в сети давно';
+    if (chat.isGroup) {
+        statusVal = 'Группа';
+    }
     document.getElementById('active-chat-status').innerText = statusVal;
-    document.getElementById('active-chat-status').className = 'online-status' + (chat.online ? ' online' : '');
+    document.getElementById('active-chat-status').className = 'online-status' + ((chat.online || chat.isGroup) ? ' online' : '');
     
     const wakeUpBtn = document.getElementById('btn-wake-up');
-    if (chat.code === 'GLOBAL') {
+    if (chat.code === 'GLOBAL' || chat.isGroup) {
         wakeUpBtn.style.display = 'none';
     } else {
         wakeUpBtn.style.display = 'inline-block';
@@ -767,6 +812,28 @@ function setupModals() {
         }
         sendPacket("ADD_FRIEND", { code });
         dialogAddFriend.classList.add('hidden');
+    });
+
+    // Create Group UI triggers
+    const dialogCreateGroup = document.getElementById('dialog-create-group');
+    document.getElementById('btn-create-group-ui').addEventListener('click', () => {
+        document.getElementById('create-group-name').value = '';
+        document.getElementById('create-group-members').value = '';
+        dialogCreateGroup.classList.remove('hidden');
+    });
+    document.getElementById('btn-create-group-cancel').addEventListener('click', () => {
+        dialogCreateGroup.classList.add('hidden');
+    });
+    document.getElementById('btn-create-group-submit').addEventListener('click', () => {
+        const name = document.getElementById('create-group-name').value.trim();
+        const membersStr = document.getElementById('create-group-members').value.trim();
+        if (!name) {
+            alert("Пожалуйста, введите название группы!");
+            return;
+        }
+        const membersList = membersStr ? membersStr.split(',').map(m => m.trim()).filter(m => m.length > 0) : [];
+        sendPacket("CREATE_GROUP", { name, members: membersList });
+        dialogCreateGroup.classList.add('hidden');
     });
     
     // Add Media UI triggers
