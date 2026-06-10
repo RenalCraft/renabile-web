@@ -323,6 +323,16 @@ function handleIncomingPacket(packet) {
             }
             break;
         }
+        case "WAKE_UP_TRIGGER": {
+            const senderNickname = data.senderNickname || "Кто-то";
+            playWakeupSound();
+            alert(`⏰ СИГНАЛ ПРОБУЖДЕНИЯ!\nПользователь "${senderNickname}" прислал вам будильник! Просыпайтесь!`);
+            break;
+        }
+        case "WAKE_UP_SENT": {
+            alert(data.message || "Сигнал пробуждения доставлен!");
+            break;
+        }
     }
 }
 
@@ -460,6 +470,13 @@ function selectChat(chat) {
     const statusVal = chat.online ? 'В сети' : 'был(а) в сети давно';
     document.getElementById('active-chat-status').innerText = statusVal;
     document.getElementById('active-chat-status').className = 'online-status' + (chat.online ? ' online' : '');
+    
+    const wakeUpBtn = document.getElementById('btn-wake-up');
+    if (chat.code === 'GLOBAL') {
+        wakeUpBtn.style.display = 'none';
+    } else {
+        wakeUpBtn.style.display = 'inline-block';
+    }
     
     setAvatarLayout(document.getElementById('active-chat-avatar'), chat.username, chat.avatar);
     
@@ -719,6 +736,12 @@ function setupNavigation() {
             localMessages[activeChat.code] = [];
             renderMessagesFeed();
         }
+    });
+
+    // Wake up alert trigger on click
+    document.getElementById('btn-wake-up').addEventListener('click', () => {
+        if (!activeChat || activeChat.code === 'GLOBAL') return;
+        sendPacket("WAKE_UP_ALERT", { targetCode: activeChat.code });
     });
 }
 
