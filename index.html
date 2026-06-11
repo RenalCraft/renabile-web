@@ -94,6 +94,9 @@
                     </div>
 
                     <button type="submit" id="btn-auth-submit" class="btn-primary">Войти в аккаунт</button>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <span id="link-forgot-password" style="text-decoration: underline; cursor: pointer; font-size: 13px; color: #458CFF;">Забыли пароль?</span>
+                    </div>
                 </form>
             </div>
         </div>
@@ -146,8 +149,8 @@
                     </div>
                 </div>
                 <div class="chat-header-actions" style="display: flex; gap: 8px;">
-                    <button id="btn-wake-up" class="header-action-btn" style="color: #FFB300 !important; cursor: pointer; display: none;">Пробудить ⏰</button>
                     <button id="btn-clear-chat" class="header-action-btn danger-text">Очистить</button>
+                    <button id="btn-delete-friend" class="header-action-btn danger-text" style="display: none;">Удалить</button>
                 </div>
             </header>
 
@@ -192,8 +195,8 @@
                 <h3>Создать группу</h3>
                 <p>Введите название группы:</p>
                 <input type="text" id="create-group-name" placeholder="Название группы">
-                <p style="margin-top: 10px; font-size: 11px; color: var(--text-secondary);">Введите ID участников через запятую (например, 1234, 5678):</p>
-                <input type="text" id="create-group-members" placeholder="ID участников">
+                <p style="margin-top: 14px; font-size: 12px; font-weight: bold; color: #FFF; margin-bottom: 5px;">Выберите друзей в группу:</p>
+                <div id="create-group-friends-list" style="max-height: 140px; overflow-y: auto; background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 12px; text-align: left;"></div>
                 <div class="dialog-buttons">
                     <button class="btn-secondary" id="btn-create-group-cancel">Отмена</button>
                     <button class="btn-primary" id="btn-create-group-submit">Создать</button>
@@ -212,6 +215,39 @@
                 <div class="dialog-buttons">
                     <button class="btn-secondary" id="btn-media-cancel">Отмена</button>
                     <button class="btn-primary" id="btn-media-submit">Отправить</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forgot Password Dialog -->
+        <div id="dialog-forgot-password" class="dialog-overlay hidden">
+            <div class="dialog-card">
+                <h3>Восстановление доступа</h3>
+                
+                <div id="forgot-password-step1">
+                    <p>Выберите действие:</p>
+                    <button class="btn-primary" id="btn-forgot-request-mode" style="width: 100%; margin-bottom: 10px;">Подать заявку модераторам</button>
+                    <button class="btn-secondary" id="btn-forgot-status-mode" style="width: 100%;">Проверить статус заявки</button>
+                </div>
+                
+                <div id="forgot-password-step-request" class="hidden">
+                    <p>Введите ваш логин и почту восстановления:</p>
+                    <input type="text" id="forgot-reset-username" placeholder="Ваш логин" style="width: 100%; margin-bottom: 10px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; color: #fff;">
+                    <input type="email" id="forgot-reset-email" placeholder="example@mail.ru" style="width: 100%; margin-bottom: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; color: #fff;">
+                    <button class="btn-primary" id="btn-forgot-request-submit" style="width: 100%;">Отправить</button>
+                </div>
+                
+                <div id="forgot-password-step-status" class="hidden">
+                    <p>Введите ваш 4-значный Код ID:</p>
+                    <input type="text" id="forgot-reset-code" placeholder="0000" maxlength="4" style="width: 100%; margin-bottom: 15px; text-align: center; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; color: #fff;">
+                    <button class="btn-primary" id="btn-forgot-status-submit" style="width: 100%;">Проверить</button>
+                </div>
+                
+                <p id="forgot-password-result" style="margin-top: 15px; font-weight: bold; font-size: 13px; color: #4CAF50; display: none; background: rgba(76,175,80,0.15); border: 1px solid rgba(76,175,80,0.3); padding: 10px; border-radius: 8px;"></p>
+
+                <div class="dialog-buttons" style="margin-top: 15px;">
+                    <button class="btn-secondary" id="btn-forgot-back" style="display: none;">Назад</button>
+                    <button class="btn-secondary" id="btn-forgot-close">Закрыть</button>
                 </div>
             </div>
         </div>

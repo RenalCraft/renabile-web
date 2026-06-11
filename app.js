@@ -217,6 +217,35 @@ function handleIncomingPacket(packet) {
             }
             break;
         }
+        case "RESET_REQ_CONFIRMED": {
+            const resultLabel = document.getElementById('forgot-password-result');
+            if (resultLabel) {
+                resultLabel.style.display = 'block';
+                resultLabel.style.color = '#4CAF50';
+                resultLabel.innerText = "Заявка успешно отправлена модераторам на рассмотрение!";
+            }
+            break;
+        }
+        case "RESET_STATUS": {
+            const resultLabel = document.getElementById('forgot-password-result');
+            if (resultLabel) {
+                resultLabel.style.display = 'block';
+                if (data.status === 'APPROVED') {
+                    resultLabel.style.color = '#4CAF50';
+                    resultLabel.innerText = `Заявка одобрена! Ваш новый временный пароль: ${data.tempPassword || data.message}`;
+                } else if (data.status === 'DECLINED') {
+                    resultLabel.style.color = '#F44336';
+                    resultLabel.innerText = "Заявка на сброс пароля была отклонена модератором.";
+                } else if (data.status === 'NONE') {
+                    resultLabel.style.color = '#FF9800';
+                    resultLabel.innerText = "Заявок на восстановление не найдено для данного кода.";
+                } else {
+                    resultLabel.style.color = '#FF9800';
+                    resultLabel.innerText = data.message || "Ваша заявка ожидает проверки модератором.";
+                }
+            }
+            break;
+        }
         case "FRIENDS_LIST": {
             const list = data.list || [];
             // Preserve current group items while updating friend list
@@ -275,6 +304,20 @@ function handleIncomingPacket(packet) {
             const list = data.history || [];
             localMessages[roomCode] = list;
             
+            if (activeChat && activeChat.code === roomCode) {
+                renderMessagesFeed();
+            }
+            break;
+        }
+        case "READ_RECEIPT": {
+            const roomCode = data.room;
+            const time = data.time;
+            if (localMessages[roomCode]) {
+                localMessages[roomCode].forEach(m => {
+                    m.is_read = true;
+                    m.read_time = time;
+                });
+            }
             if (activeChat && activeChat.code === roomCode) {
                 renderMessagesFeed();
             }
@@ -516,17 +559,18 @@ function selectChat(chat) {
     document.getElementById('active-chat-status').innerText = statusVal;
     document.getElementById('active-chat-status').className = 'online-status' + ((chat.online || chat.isGroup) ? ' online' : '');
     
-    const wakeUpBtn = document.getElementById('btn-wake-up');
+    const deleteFriendBtn = document.getElementById('btn-delete-friend');
     if (chat.code === 'GLOBAL' || chat.isGroup) {
-        wakeUpBtn.style.display = 'none';
+        deleteFriendBtn.style.display = 'none';
     } else {
-        wakeUpBtn.style.display = 'inline-block';
+        deleteFriendBtn.style.display = 'inline-block';
     }
     
     setAvatarLayout(document.getElementById('active-chat-avatar'), chat.username, chat.avatar);
     
     // Request historical room data
     sendPacket("GET_HISTORY", { room: chat.code });
+    sendPacket("MARK_READ", { room: chat.code });
     
     // Clean inputs
     document.getElementById('message-text-input').value = '';
@@ -610,6 +654,8 @@ function renderMessagesFeed() {
         meta.innerText = msg.time || '';
         if (msg.isPending) {
             meta.innerText += " • ...";
+        } else if (isMy) {
+            meta.innerText += msg.is_read ? " • ✓✓" : " • ✓";
         }
         bubble.appendChild(meta);
         
@@ -783,11 +829,19 @@ function setupNavigation() {
         }
     });
 
-    // Wake up alert trigger on click
-    document.getElementById('btn-wake-up').addEventListener('click', () => {
-        if (!activeChat || activeChat.code === 'GLOBAL') return;
-        sendPacket("WAKE_UP_ALERT", { targetCode: activeChat.code });
+    // Delete Friend
+    document.getElementById('btn-delete-friend').addEventListener('click', () => {
+        if (!activeChat) return;
+        if (confirm("Вы действительно хотите удалить этого друга и всю переписку с ним?")) {
+            sendPacket("REMOVE_FRIEND", { friend_code: activeChat.code });
+            chatsList = chatsList.filter(c => c.code !== activeChat.code);
+            renderChatsList();
+            showScreen('chats');
+            activeChat = null;
+        }
     });
+
+
 }
 
 // Modals Setup
@@ -818,7 +872,37 @@ function setupModals() {
     const dialogCreateGroup = document.getElementById('dialog-create-group');
     document.getElementById('btn-create-group-ui').addEventListener('click', () => {
         document.getElementById('create-group-name').value = '';
-        document.getElementById('create-group-members').value = '';
+        
+        // Dynamically build checkboxes for actual friends list
+        const friendsListContainer = document.getElementById('create-group-friends-list');
+        friendsListContainer.innerHTML = '';
+        const friends = chatsList.filter(c => !c.isGroup);
+        
+        if (friends.length === 0) {
+            friendsListContainer.innerHTML = '<p style="color: grey; font-size: 12px; margin: 0;">У вас пока нет друзей в списке. Добавьте друзей сначала!</p>';
+        } else {
+            friends.forEach(f => {
+                const label = document.createElement('label');
+                label.style.display = 'flex';
+                label.style.alignItems = 'center';
+                label.style.marginBottom = '8px';
+                label.style.cursor = 'pointer';
+                label.style.fontSize = '13px';
+                label.style.color = '#fff';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = f.code;
+                checkbox.className = 'create-group-member-checkbox';
+                checkbox.style.marginRight = '10px';
+                checkbox.style.cursor = 'pointer';
+                
+                label.appendChild(checkbox);
+                label.appendChild(document.createTextNode(`${f.username} (#${f.code})`));
+                friendsListContainer.appendChild(label);
+            });
+        }
+        
         dialogCreateGroup.classList.remove('hidden');
     });
     document.getElementById('btn-create-group-cancel').addEventListener('click', () => {
@@ -826,12 +910,13 @@ function setupModals() {
     });
     document.getElementById('btn-create-group-submit').addEventListener('click', () => {
         const name = document.getElementById('create-group-name').value.trim();
-        const membersStr = document.getElementById('create-group-members').value.trim();
         if (!name) {
             alert("Пожалуйста, введите название группы!");
             return;
         }
-        const membersList = membersStr ? membersStr.split(',').map(m => m.trim()).filter(m => m.length > 0) : [];
+        const checkedBoxes = document.querySelectorAll('.create-group-member-checkbox:checked');
+        const membersList = Array.from(checkedBoxes).map(cb => cb.value);
+        
         sendPacket("CREATE_GROUP", { name, members: membersList });
         dialogCreateGroup.classList.add('hidden');
     });
@@ -969,6 +1054,72 @@ function setupModals() {
     // Logout action click
     document.getElementById('btn-logout').addEventListener('click', () => {
         logout();
+    });
+
+    // Forgot Password triggers
+    const dialogForgot = document.getElementById('dialog-forgot-password');
+    const step1 = document.getElementById('forgot-password-step1');
+    const stepRequest = document.getElementById('forgot-password-step-request');
+    const stepStatus = document.getElementById('forgot-password-step-status');
+    const resultLabel = document.getElementById('forgot-password-result');
+    const btnBack = document.getElementById('btn-forgot-back');
+    
+    document.getElementById('link-forgot-password').addEventListener('click', () => {
+        // Reset states
+        step1.classList.remove('hidden');
+        stepRequest.classList.add('hidden');
+        stepStatus.classList.add('hidden');
+        resultLabel.style.display = 'none';
+        btnBack.style.display = 'none';
+        document.getElementById('forgot-reset-username').value = '';
+        document.getElementById('forgot-reset-email').value = '';
+        document.getElementById('forgot-reset-code').value = '';
+        dialogForgot.classList.remove('hidden');
+    });
+    
+    document.getElementById('btn-forgot-request-mode').addEventListener('click', () => {
+        step1.classList.add('hidden');
+        stepRequest.classList.remove('hidden');
+        btnBack.style.display = 'inline-block';
+    });
+    
+    document.getElementById('btn-forgot-status-mode').addEventListener('click', () => {
+        step1.classList.add('hidden');
+        stepStatus.classList.remove('hidden');
+        btnBack.style.display = 'inline-block';
+    });
+    
+    btnBack.addEventListener('click', () => {
+        step1.classList.remove('hidden');
+        stepRequest.classList.add('hidden');
+        stepStatus.classList.add('hidden');
+        btnBack.style.display = 'none';
+        resultLabel.style.display = 'none';
+    });
+    
+    document.getElementById('btn-forgot-close').addEventListener('click', () => {
+        dialogForgot.classList.add('hidden');
+    });
+    
+    document.getElementById('btn-forgot-request-submit').addEventListener('click', () => {
+        const u = document.getElementById('forgot-reset-username').value.trim();
+        const m = document.getElementById('forgot-reset-email').value.trim();
+        if (!u || !m) {
+            alert("Пожалуйста, введите логин и почту восстановления!");
+            return;
+        }
+        connectWebSocket();
+        sendPacket("RESET_REQ", { username: u, email: m });
+    });
+    
+    document.getElementById('btn-forgot-status-submit').addEventListener('click', () => {
+        const code = document.getElementById('forgot-reset-code').value.trim();
+        if (!code) {
+            alert("Пожалуйста, введите ваш ID!");
+            return;
+        }
+        connectWebSocket();
+        sendPacket("CHECK_RESET_STATUS", { code: code });
     });
 }
 
